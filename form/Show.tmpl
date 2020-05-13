@@ -1,0 +1,8 @@
+{{ define "Show" }}
+    {{ template "Header" }}
+        {{ template "Menu" }}
+        <h2> Person {{ .ID }} </h2>
+            <p>First Name: {{ .FName }}</p>
+            <p>Last Name: {{ .LName }}</p>
+    {{ template "Footer" }}
+{{ end }}
