@@ -18,13 +18,13 @@ RUN go build -o mysqlweb .
 WORKDIR /dist
 
 RUN cp /build/mysqlweb .
-RUN cp /build/form/Edit.tmpl .
-RUN cp /build/form/Footer.tmpl .
-RUN cp /build/form/Header.tmpl .
-RUN cp /build/form/Index.tmpl .
-RUN cp /build/form/Menu.tmpl .
-RUN cp /build/form/New.tmpl .
-RUN cp /build/form/Show.tmpl .
+COPY ./form/Edit.tmpl /dist/form/Edit.tmpl
+COPY ./form/Footer.tmpl /dist/form/Footer.tmpl
+COPY ./form/Header.tmpl /dist/form/Header.tmpl
+COPY ./form/Index.tmpl /dist/form/Index.tmpl
+COPY ./form/Menu.tmpl /dist/form/Menu.tmpl
+COPY ./form/New.tmpl /dist/form/New.tmpl
+COPY ./form/Show.tmpl /dist/form/Show.tmpl
 
 EXPOSE 8080
 
