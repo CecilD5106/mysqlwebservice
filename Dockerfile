@@ -21,17 +21,15 @@ RUN cp /build/mysqlweb .
 
 FROM alpine
 
-RUN mkdir /app
-
-COPY --from=builder /dist/mysqlweb /app
-COPY ./form/Edit.tmpl /app/form/Edit.tmpl
-COPY ./form/Footer.tmpl /app/form/Footer.tmpl
-COPY ./form/Header.tmpl /app/form/Header.tmpl
-COPY ./form/Index.tmpl /app/form/Index.tmpl
-COPY ./form/Menu.tmpl /app/form/Menu.tmpl
-COPY ./form/New.tmpl /app/form/New.tmpl
-COPY ./form/Show.tmpl /app/form/Show.tmpl
+COPY --from=builder /dist/mysqlweb /
+COPY ./form/Edit.tmpl /form/Edit.tmpl
+COPY ./form/Footer.tmpl /form/Footer.tmpl
+COPY ./form/Header.tmpl /form/Header.tmpl
+COPY ./form/Index.tmpl /form/Index.tmpl
+COPY ./form/Menu.tmpl /form/Menu.tmpl
+COPY ./form/New.tmpl /form/New.tmpl
+COPY ./form/Show.tmpl /form/Show.tmpl
 
 EXPOSE 8080
 
-ENTRYPOINT ["/app/mysqlweb"]
+ENTRYPOINT ["/mysqlweb"]
