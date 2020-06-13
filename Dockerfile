@@ -23,7 +23,7 @@ FROM alpine
 
 RUN mkdir /app
 
-COPY --from=builder /dist/mysqlweb /app/
+COPY --from=builder /dist/mysqlweb /app
 COPY ./form/Edit.tmpl /app/form/Edit.tmpl
 COPY ./form/Footer.tmpl /app/form/Footer.tmpl
 COPY ./form/Header.tmpl /app/form/Header.tmpl
