@@ -107,7 +107,7 @@ func Insert(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		fname := r.FormValue("fname")
 		lname := r.FormValue("lname")
-		insForm, err := db.Prepare("INSERT INTO person(first_name, last_name) VALUES(?, ?)")
+		insForm, err := db.Prepare("CALL insert_person(?, ?)")
 		if err != nil {
 			panic(err.Error())
 		}
