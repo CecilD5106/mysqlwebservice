@@ -2,17 +2,28 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"text/template"
 
 	_ "github.com/go-sql-driver/mysql"
 )
 
+// Person is a model of the person table
 type Person struct {
-	ID    string
-	FName string
-	LName string
+	ID    string `json:"person_id"`
+	FName string `json:"first_name"`
+	LName string `json:"last_name"`
+}
+
+// Response is a list of person objects
+type Response struct {
+	// Name   string   `json:"result"`
+	People []Person `json:"result"`
 }
 
 func dbConn() (db *sql.DB) {
@@ -30,28 +41,37 @@ func dbConn() (db *sql.DB) {
 
 var tmpl = template.Must(template.ParseGlob("form/*"))
 
+// Index is the main primary website page
 func Index(w http.ResponseWriter, r *http.Request) {
-	db := dbConn()
-	selDB, err := db.Query("SELECT * FROM person")
+	response, err := http.Get("http://localhost:8000/")
 	if err != nil {
-		panic(err.Error())
+		fmt.Print(err.Error())
+		os.Exit(1)
 	}
 
-	indiv := Person{}
+	responseData, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	bodyString := string(responseData)
+	fmt.Println(bodyString)
+
+	var responseObject Response
+	json.Unmarshal(responseData, &responseObject)
+
+	//fmt.Println(responseObject.Name)
+	fmt.Println(len(responseObject.People))
+
+	person := Person{}
 	res := []Person{}
-	for selDB.Next() {
-		var id, fname, lname string
-		err = selDB.Scan(&id, &fname, &lname)
-		if err != nil {
-			panic(err.Error())
-		}
-		indiv.ID = id
-		indiv.FName = fname
-		indiv.LName = lname
-		res = append(res, indiv)
+	for i := 0; i < len(responseObject.People); i++ {
+		person.ID = responseObject.People[i].ID
+		person.FName = responseObject.People[i].FName
+		person.LName = responseObject.People[i].LName
+		res = append(res, person)
 	}
 	tmpl.ExecuteTemplate(w, "Index", res)
-	defer db.Close()
 }
 
 func Show(w http.ResponseWriter, r *http.Request) {
