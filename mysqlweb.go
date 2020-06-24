@@ -22,7 +22,6 @@ type Person struct {
 
 // Response is a list of person objects
 type Response struct {
-	// Name   string   `json:"result"`
 	People []Person `json:"result"`
 }
 
@@ -54,14 +53,8 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	bodyString := string(responseData)
-	fmt.Println(bodyString)
-
 	var responseObject Response
 	json.Unmarshal(responseData, &responseObject)
-
-	//fmt.Println(responseObject.Name)
-	fmt.Println(len(responseObject.People))
 
 	person := Person{}
 	res := []Person{}
