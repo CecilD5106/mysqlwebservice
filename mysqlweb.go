@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"os"
 	"text/template"
 
+	//"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -29,7 +31,7 @@ func dbConn() (db *sql.DB) {
 	dbDriver := "mysql"
 	dbUser := "cgdavis"
 	dbPass := "DzftXvz$eR7VpY^h"
-	dbServer := "tcp(172.18.105.227:3306)"
+	dbServer := "tcp(172.17.232.252:3306)"
 	dbName := "people"
 	db, err := sql.Open(dbDriver, dbUser+":"+dbPass+"@"+dbServer+"/"+dbName)
 	if err != nil {
@@ -42,7 +44,7 @@ var tmpl = template.Must(template.ParseGlob("form/*"))
 
 // Index is the main primary website page
 func Index(w http.ResponseWriter, r *http.Request) {
-	response, err := http.Get("http://localhost:8000/")
+	response, err := http.Get("http://localhost:8000/getpeople")
 	if err != nil {
 		fmt.Print(err.Error())
 		os.Exit(1)
@@ -67,97 +69,111 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	tmpl.ExecuteTemplate(w, "Index", res)
 }
 
+// Show activates a web page that show a single record
 func Show(w http.ResponseWriter, r *http.Request) {
-	db := dbConn()
-	nId := r.URL.Query().Get("id")
-	selDB, err := db.Query("SELECT * FROM person WHERE person_id=?", nId)
+	nID := r.URL.Query().Get("id")
+	sURL := "http://localhost:8000/getperson/" + nID
+	response, err := http.Get(sURL)
 	if err != nil {
-		panic(err.Error())
+		fmt.Print(err.Error())
+		os.Exit(1)
 	}
-	indiv := Person{}
-	for selDB.Next() {
-		var id, fname, lname string
-		err = selDB.Scan(&id, &fname, &lname)
-		if err != nil {
-			panic(err.Error())
-		}
-		indiv.ID = id
-		indiv.FName = fname
-		indiv.LName = lname
+
+	responseData, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		log.Fatal(err)
 	}
-	tmpl.ExecuteTemplate(w, "Show", indiv)
-	defer db.Close()
+
+	var responseObject Response
+	json.Unmarshal(responseData, &responseObject)
+
+	person := Person{}
+	person.ID = responseObject.People[0].ID
+	person.FName = responseObject.People[0].FName
+	person.LName = responseObject.People[0].LName
+	tmpl.ExecuteTemplate(w, "Show", person)
 }
 
+// New opens the web page to create a new person
 func New(w http.ResponseWriter, r *http.Request) {
 	tmpl.ExecuteTemplate(w, "New", nil)
 }
 
+// Edit opens the web page to edit a person record
 func Edit(w http.ResponseWriter, r *http.Request) {
-	db := dbConn()
-	nId := r.URL.Query().Get("id")
-	selDB, err := db.Query("SELECT * FROM person WHERE person_id=?", nId)
+	nID := r.URL.Query().Get("id")
+	sURL := "http://localhost:8000/getperson/" + nID
+	response, err := http.Get(sURL)
 	if err != nil {
-		panic(err.Error())
+		fmt.Print(err.Error())
+		os.Exit(1)
 	}
-	indiv := Person{}
-	for selDB.Next() {
-		var id, fname, lname string
-		err = selDB.Scan(&id, &fname, &lname)
-		if err != nil {
-			panic(err.Error())
-		}
-		indiv.ID = id
-		indiv.FName = fname
-		indiv.LName = lname
+
+	responseData, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		log.Fatal(err)
 	}
-	tmpl.ExecuteTemplate(w, "Edit", indiv)
-	defer db.Close()
+
+	var responseObject Response
+	json.Unmarshal(responseData, &responseObject)
+
+	person := Person{}
+	person.ID = responseObject.People[0].ID
+	person.FName = responseObject.People[0].FName
+	person.LName = responseObject.People[0].LName
+
+	tmpl.ExecuteTemplate(w, "Edit", person)
 }
 
+// Insert is the code to add a new person to the database
 func Insert(w http.ResponseWriter, r *http.Request) {
-	db := dbConn()
 	if r.Method == "POST" {
 		fname := r.FormValue("fname")
 		lname := r.FormValue("lname")
-		insForm, err := db.Prepare("CALL insert_person(?, ?)")
+		jsonData := map[string]string{"first_name": fname, "last_name": lname}
+		jsonValue, _ := json.Marshal(jsonData)
+		res, err := http.Post("http://localhost:8000/createperson", "application/json", bytes.NewBuffer(jsonValue))
 		if err != nil {
 			panic(err.Error())
+		} else {
+			data, _ := ioutil.ReadAll(res.Body)
+			fmt.Println(string(data))
 		}
-		insForm.Exec(fname, lname)
 		log.Println("INSERT: First Name: " + fname + " | Last Name: " + lname)
 	}
-	defer db.Close()
 	http.Redirect(w, r, "/", 301)
 }
 
+// Update data from Edit web page
 func Update(w http.ResponseWriter, r *http.Request) {
-	db := dbConn()
 	if r.Method == "POST" {
 		fname := r.FormValue("fname")
 		lname := r.FormValue("lname")
 		id := r.FormValue("uid")
-		insForm, err := db.Prepare("UPDATE person SET first_name=?, last_name=? WHERE person_id=?")
+		jsonData := map[string]string{"person_id": id, "first_name": fname, "last_name": lname}
+		jsonValue, _ := json.Marshal(jsonData)
+		res, err := http.Post("http://localhost:8000/updateperson", "application/json", bytes.NewBuffer(jsonValue))
 		if err != nil {
 			panic(err.Error())
+		} else {
+			data, _ := ioutil.ReadAll(res.Body)
+			fmt.Print(string(data))
 		}
-		insForm.Exec(fname, lname, id)
 		log.Println("UPDATE: First Name: " + fname + " | Last Name: " + lname)
 	}
-	defer db.Close()
 	http.Redirect(w, r, "/", 301)
 }
 
+// Delete activates a Delete Person call
 func Delete(w http.ResponseWriter, r *http.Request) {
-	db := dbConn()
-	indiv := r.URL.Query().Get("id")
-	delForm, err := db.Prepare("DELETE FROM person WHERE person_id=?")
+	nID := r.URL.Query().Get("id")
+	sURL := "http://localhost:8000/deleteperson/" + nID
+	_, err := http.Get(sURL)
 	if err != nil {
-		panic(err.Error())
+		fmt.Print(err.Error())
+		os.Exit(1)
 	}
-	delForm.Exec(indiv)
 	log.Println("DELETE")
-	defer db.Close()
 	http.Redirect(w, r, "/", 301)
 }
 
