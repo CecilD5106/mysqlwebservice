@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -10,9 +9,8 @@ import (
 	"net/http"
 	"os"
 	"text/template"
-
 	//"github.com/gin-gonic/gin"
-	_ "github.com/go-sql-driver/mysql"
+	// _ "github.com/go-sql-driver/mysql"
 )
 
 // Person is a model of the person table
@@ -25,19 +23,6 @@ type Person struct {
 // Response is a list of person objects
 type Response struct {
 	People []Person `json:"result"`
-}
-
-func dbConn() (db *sql.DB) {
-	dbDriver := "mysql"
-	dbUser := "cgdavis"
-	dbPass := "DzftXvz$eR7VpY^h"
-	dbServer := "tcp(172.17.232.252:3306)"
-	dbName := "people"
-	db, err := sql.Open(dbDriver, dbUser+":"+dbPass+"@"+dbServer+"/"+dbName)
-	if err != nil {
-		panic(err.Error())
-	}
-	return db
 }
 
 var tmpl = template.Must(template.ParseGlob("form/*"))
